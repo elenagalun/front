@@ -5,10 +5,16 @@ import "@material/mwc-list/mwc-list-item";
 import { mdiCalendar } from "@mdi/js";
 import {
   addDays,
+  subMinutes,
+  subHours,
+  endOfMinute,
+  endOfHour,
   endOfDay,
   endOfMonth,
   endOfWeek,
   endOfYear,
+  startOfMinute,
+  startOfHour,
   startOfDay,
   startOfMonth,
   startOfWeek,
@@ -102,6 +108,38 @@ export class HaDateRangePicker extends LitElement {
       );
 
       this._ranges = {
+        [this.hass.localize(
+          "ui.components.date-range-picker.ranges.last_30_minutes"
+        )]: [
+          calcDate(
+            subMinutes(today, 30),
+            startOfMinute,
+            this.hass.locale,
+            this.hass.config,
+            {
+              weekStartsOn,
+            }
+          ),
+          calcDate(today, endOfMinute, this.hass.locale, this.hass.config, {
+            weekStartsOn,
+          }),
+        ],
+        [this.hass.localize(
+          "ui.components.date-range-picker.ranges.last_2_hours"
+        )]: [
+          calcDate(
+            subHours(today, 2),
+            startOfHour,
+            this.hass.locale,
+            this.hass.config,
+            {
+              weekStartsOn,
+            }
+          ),
+          calcDate(today, endOfHour, this.hass.locale, this.hass.config, {
+            weekStartsOn,
+          }),
+        ],
         [this.hass.localize("ui.components.date-range-picker.ranges.today")]: [
           calcDate(today, startOfDay, this.hass.locale, this.hass.config, {
             weekStartsOn,
