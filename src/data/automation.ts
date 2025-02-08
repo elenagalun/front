@@ -256,8 +256,22 @@ export interface ZoneCondition extends BaseCondition {
 
 type Weekday = "sun" | "mon" | "tue" | "wed" | "thu" | "fri" | "sat";
 
+export interface DateCondition extends BaseCondition {
+  condition: "date";
+  after?: string;
+  before?: string;
+  weekday?: Weekday | Weekday[];
+}
+
 export interface TimeCondition extends BaseCondition {
   condition: "time";
+  after?: string;
+  before?: string;
+  weekday?: Weekday | Weekday[];
+}
+
+export interface DatetimeCondition extends BaseCondition {
+  condition: "datetime";
   after?: string;
   before?: string;
   weekday?: Weekday | Weekday[];
@@ -301,7 +315,9 @@ export type Condition =
   | NumericStateCondition
   | SunCondition
   | ZoneCondition
+  | DateCondition
   | TimeCondition
+  | DatetimeCondition
   | TemplateCondition
   | DeviceCondition
   | LogicalCondition
