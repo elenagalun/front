@@ -2,9 +2,10 @@ import "@material/mwc-button/mwc-button";
 import "@material/mwc-list/mwc-list";
 import type { ActionDetail } from "@material/mwc-list/mwc-list-foundation";
 import "@material/mwc-list/mwc-list-item";
-import { mdiCalendar } from "@mdi/js";
+import { mdiCalendar, mdiMagnifyPlus, mdiMagnifyMinus } from "@mdi/js";
 import {
   addDays,
+  subHours,
   endOfDay,
   endOfMonth,
   endOfWeek,
@@ -14,6 +15,11 @@ import {
   startOfMonth,
   startOfWeek,
   startOfYear,
+  differenceInMilliseconds,
+  roundToNearestHours,
+  subMilliseconds,
+  addMilliseconds,
+  isToday,
 } from "date-fns";
 import { fromZonedTime, toZonedTime } from "date-fns-tz";
 import type { PropertyValues, TemplateResult } from "lit";
@@ -225,7 +231,7 @@ export class HaDateRangePicker extends LitElement {
                         this.hass.locale,
                         this.hass.config
                       )) +
-                  (window.innerWidth >= 459 ? " - " : " - \n") +
+                  (window.innerWidth >= 580 ? " - " : " - \n") +
                   (isThisYear(this.endDate)
                     ? formatShortDateTime(
                         this.endDate,
@@ -248,6 +254,20 @@ export class HaDateRangePicker extends LitElement {
                   @click=${this._handleInputClick}
                   readonly
                 ></ha-textarea>
+                <ha-icon-button
+                  @click=${this._handleZoomOut}
+                  .label=${this.hass.localize(
+                    "ui.components.date-range-picker.zoom_out"
+                  )}
+                  .path=${mdiMagnifyMinus}
+                ></ha-icon-button>
+                <ha-icon-button
+                  @click=${this._handleZoomIn}
+                  .label=${this.hass.localize(
+                    "ui.components.date-range-picker.zoom_in"
+                  )}
+                  .path=${mdiMagnifyPlus}
+                ></ha-icon-button>
                 <ha-icon-button-prev
                   .label=${this.hass.localize("ui.common.previous")}
                   @click=${this._handlePrev}
@@ -310,6 +330,46 @@ export class HaDateRangePicker extends LitElement {
     this.startDate = start;
     this.endDate = end;
     const dateRange = [start, end];
+    const dateRangePicker = this._dateRangePicker;
+    dateRangePicker.clickRange(dateRange);
+    dateRangePicker.clickedApply();
+  }
+
+  private _handleZoomIn(ev: MouseEvent): void {
+    if (ev && ev.stopPropagation) ev.stopPropagation();
+    this._handleZoom(true);
+  }
+
+  private _handleZoomOut(ev: MouseEvent): void {
+    if (ev && ev.stopPropagation) ev.stopPropagation();
+    this._handleZoom(false);
+  }
+
+  private _handleZoom(isZoomIn: boolean): void {
+    const diff = differenceInMilliseconds(
+      isToday(this.startDate) && this.endDate > new Date()
+        ? subHours(new Date(), 1)
+        : this.endDate,
+      this.startDate
+    );
+    const dateRange = [
+      isZoomIn
+        ? calcDate(
+            addMilliseconds(this.startDate, diff / 2) > new Date()
+              ? subHours(new Date(), 0.5)
+              : subHours(addMilliseconds(this.startDate, diff / 2), 0.5),
+            roundToNearestHours,
+            this.hass.locale,
+            this.hass.config
+          )
+        : calcDate(
+            subMilliseconds(this.startDate, diff),
+            startOfDay,
+            this.hass.locale,
+            this.hass.config
+          ),
+      this.endDate,
+    ];
     const dateRangePicker = this._dateRangePicker;
     dateRangePicker.clickRange(dateRange);
     dateRangePicker.clickedApply();
@@ -395,44 +455,46 @@ export class HaDateRangePicker extends LitElement {
   }
 
   static styles = css`
+    ha-icon-button {
+      direction: var(--direction);
+    }
 
-      ha-icon-button {
-        direction: var(--direction);
+    .date-range-inputs {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .date-range-ranges {
+      border-right: 1px solid var(--divider-color);
+    }
+
+    .date-range-footer {
+      display: flex;
+      justify-content: flex-end;
+      padding: 8px;
+      border-top: 1px solid var(--divider-color);
+    }
+
+    ha-textarea {
+      display: inline-block;
+      width: 340px;
+    }
+    @media only screen and (max-width: 460px) {
+      ha-textarea {
+        width: 100%;
       }
-
       .date-range-inputs {
-        display: flex;
-        align-items: center;
-        gap: 8px;
+        gap: 0px;
       }
-
+    }
+    @media only screen and (max-width: 800px) {
       .date-range-ranges {
-        border-right: 1px solid var(--divider-color);
+        border-right: none;
+        border-bottom: 1px solid var(--divider-color);
       }
-
-      .date-range-footer {
-        display: flex;
-        justify-content: flex-end;
-        padding: 8px;
-        border-top: 1px solid var(--divider-color);
-      }
-
-      ha-textarea {
-        display: inline-block;
-        width: 340px;
-      }
-      @media only screen and (max-width: 460px) {
-      ha-textarea {
-        width: 100%
-      }
-
-      @media only screen and (max-width: 800px) {
-        .date-range-ranges {
-          border-right: none;
-          border-bottom: 1px solid var(--divider-color);
-        }
-      }
-    `;
+    }
+  `;
 }
 
 declare global {
